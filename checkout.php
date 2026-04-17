@@ -4,23 +4,25 @@
     include 'connection.php';
 
     if (isset($_SESSION['order'])) {
+        $item_id = $_SESSION['order']['item_id'];
         $item_name = $_SESSION['order']['item_name'];
         $quantity = $_SESSION['order']['quantity'];
         $mod = $_SESSION['order']['mod'];
         $order_date = $_SESSION['order']['order_date'];
 
-        $stmt = $conn->prepare("SELECT * FROM items WHERE item_name = ?");
-        $stmt->bind_param("s", $item_name);
+        $stmt = $conn->prepare("SELECT * FROM items WHERE item_id = ?");
+        $stmt->bind_param("s", $item_id);
         $stmt->execute();
         $result = $stmt->get_result();
 
         // No prepared statement version (vulnerable to SQL injection):
-        // $query = "SELECT * FROM items WHERE item_name = '$item_name'";
+        // $query = "SELECT * FROM items WHERE item_id = '$item_id'";
         // $result = mysqli_query($conn, $query);
 
         if (mysqli_num_rows($result) > 0) {
             $row          = mysqli_fetch_assoc($result);
             $item_id      = $row['item_id'];
+            $item_name    = $row['item_name'];
             $manufacturer = $row['manufacturer'];
             $stock        = $row['quantity'];
             $t_date       = date('Y-m-d');
@@ -28,12 +30,14 @@
             $subtotal     = $quantity * $unit_price;
             $order_day    = date('N', strtotime($order_date));
 
+            // Calculate service fee based on quantity and unit price
             $service_fee = 0;
 
             $first_20    = min($quantity, 20) * $unit_price * 0.04;
             $remaining   = max($quantity - 20, 0) * $unit_price * 0.07;
             $service_fee = $first_20 + $remaining;
 
+            // Calculate payment fee based on mode of payment
             $payment_fee = 0;
 
             if ($mod === "Debit/Credit Card") {
@@ -44,17 +48,43 @@
 
             $total = $subtotal + $service_fee + $payment_fee;
 
-            // $discount = 0;
+            // Calculate total with discount based on the date (MWF or TTh) (optional, can be removed if not needed)
+                // if ($order_day == 1 || $order_day == 3 || $order_day == 5) { // Monday, Wednesday, Friday
+                //     $total = $total * (1 - 0.10); // 10% discount for orders placed on MWF
+                // } else if ($order_day == 2 || $order_day == 4) { // Tuesday, Thursday
+                //     $total = $total * (1 - 0.05); // 5% discount for orders placed on TTh
+                // }
 
-            // if ($order_day >= 1 && $order_day <= 5) {
-            //     $discount = 0.1; // 10% discount for orders placed on weekdays
-            //     $total = $subtotal * (1 - $discount); // 10% discount for orders placed on weekdays
-            // } else {
-            //     $discount = 0.05; // 5% discount for orders placed on weekends
-            //     $total = $subtotal * (1 - $discount); // 5% discount for orders placed on weekends
-            // }
+            // Calculate discount based on order date (optional, can be removed if not needed)
+                // $discount = 0;
 
-            // $grand_total = $total + ($total * 0.12); // Adding 12% tax to the total
+                // if ($order_day >= 1 && $order_day <= 5) {
+                //     $discount = 0.1; // 10% discount for orders placed on weekdays
+                //     $total = $subtotal * (1 - $discount); // 10% discount for orders placed on weekdays
+                // } else {
+                //     $discount = 0.05; // 5% discount for orders placed on weekends
+                //     $total = $subtotal * (1 - $discount); // 5% discount for orders placed on weekends
+                // }
+
+            // Calculate total with surcharge based on order date (optional, can be removed if not needed)
+                // if ($order_day == 6 || $order_day == 7) { // Saturday, Sunday
+                //     $total = $total * (1 + 0.05); // 5% surcharge for orders placed on weekends
+                // }
+
+            // Calculate grand total with vat (VAT-EXCLUSIVE) VAT not included in the total
+                // $tax_rate = 0.12;
+                // $VATable = $subtotal;
+                // $VATamount = $VATable * $tax_rate;
+                // $total = $VATable + $VATamount; 
+                // or
+                // $total = $subtotal + ($subtotal * 0.12); // Adding 12% tax to the total
+
+            // Calculate grand total with vat (VAT-INCLUSIVE)  VAT already included in the total, so we need to extract the VAT amount from the total
+                // $tax_rate = 0.12;
+                // $VATable = $subtotal / (1 + $tax_rate); // Calculate VATable amount from total
+                // $VATamount = $subtotal - $VATable; // Calculate VAT amount from total
+                // $total = $subtotal;
+
 
             $success = false;
 
@@ -109,7 +139,7 @@
 
         <h2>Order Details</h2>
 
-        <p><strong>Transaction Date: </strong> <?= date('F d, Y', strtotime($t_date)); ?></p>
+        <p><strong>Transaction Date: </strong> <?= date('F d, Y', strtotime($t_date)); ?></p> <!-- Format transaction date as "Month Day, Year" --> 
 
         <table border="1" cellpadding="8" cellspacing="0">
             <thead>
@@ -124,7 +154,7 @@
                 <tr>
                     <td><?= $item_name ?></td>
                     <td><?= $quantity ?></td>
-                    <td>Php <?= number_format($unit_price, 2) ?></td>
+                    <td>Php <?= number_format($unit_price, 2) ?></td> <!-- Format unit price with 2 decimal places and "Php" prefix --> 
                     <td>Php <?= number_format($subtotal, 2) ?></td>
                 </tr>
             </tbody>

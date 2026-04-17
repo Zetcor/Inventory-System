@@ -51,11 +51,9 @@
             // $item3 = strtoupper(substr($item_name, 0, 3));
             // $parts = explode('-', $item_id);
             // $original_random = end($parts);
-            // $new_id = $manu2 . "-" . $item3 . "-" . $date_added . "-" . $original_random;
+            // $new_id = $manu2 . "-" . $item3 . "-" . $date_id . "-" . $original_random;
 
-
-
-            // add item_id = '$new_id' to the query if you want to update the item_id as well
+            // use the new_id variable instead of item_id in the bind_param if you want to update the item_id as well
             $stmt = $conn->prepare("UPDATE items SET item_name = ?, manufacturer = ?, quantity = ?, unit_price = ? WHERE item_id = ?");
             $stmt->bind_param("ssids", $item_name, $manufacturer, $quantity, $unit_price, $item_id);
             $stmt->execute();
@@ -133,7 +131,7 @@
         <br><br>
 
         <!-- add min="1" if needed and step="0.01" or "1", depending on the decimal places needed -->
-         <!-- use step="any" to accept any number of decimal places -->
+        <!-- use step="any" to accept any number of decimal places -->
         <label for="quantity">Quantity:</label><br>
         <input type="number" step="1" id="quantity" name="quantity" value="<?= htmlspecialchars($quantity) ?>" min="1" required><br>
         <?php if (isset($errors['quantity'])): ?>

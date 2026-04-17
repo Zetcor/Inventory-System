@@ -14,8 +14,8 @@
         $manufacturer = sanitize_input($_POST['manufacturer']);
         $quantity     = sanitize_input($_POST['quantity']);
         $unit_price   = sanitize_input($_POST['unit_price']);
-        $date_added   = date('Y-m-d');
-        $date_id      = date('Ymd');
+        $date_added   = date('Y-m-d'); // Get current date in YYYY-MM-DD format for MySQL DATE type
+        $date_id      = date('Ymd'); // Get current date in YYYYMMDD format for item ID generation
 
         $errors = [];
         if (is_empty($item_name)) {
@@ -42,10 +42,12 @@
             $errors['unit_price'] = "Unit price must be a positive number.";
         }
 
+        // System generated ID
         if (empty($errors)) {
-            $manu2 = strtoupper(substr($manufacturer, 0, 2));
-            $item3 = strtoupper(substr($item_name, 0, 3));
-            $random = rand(1000000, 9999999);
+            $manu2 = strtoupper(substr($manufacturer, 0, 2)); // Get first 2 characters of manufacturer and convert to uppercase
+            $item3 = strtoupper(substr($item_name, 0, 3)); // Get first 3 characters of item name and convert to uppercase
+            $random = rand(1000000, 9999999);  // Generate a random 7-digit number
+            // $random = str_pad(rand(0, 99999), 7, "0", STR_PAD_LEFT); // Generate a random 7-digit number and pad with leading zeros if necessary
 
             $item_id = $manu2 . "-" . $item3 . "-" . $date_id . "-" . $random;
 
@@ -98,7 +100,7 @@
         <br><br>
 
         <!-- add min="1" if needed and step="0.01" or "1", depending on the decimal places needed -->
-         <!-- use step="any" to accept any number of decimal places -->
+        <!-- use step="any" to accept any number of decimal places -->
         <label for="quantity">Quantity:</label><br>
         <input type="number" step="1" id="quantity" name="quantity" value="<?= htmlspecialchars($quantity) ?>"><br>
         <?php if (isset($errors['quantity'])): ?>
@@ -107,7 +109,7 @@
         <br><br>
 
         <!-- add min="1" if needed and step="0.01" or "1", depending on the decimal places needed -->
-         <!-- use step="any" to accept any number of decimal places -->
+        <!-- use step="any" to accept any number of decimal places -->
         <label for="unit_price">Unit Price:</label><br>
         <input type="number" step="0.01" id="unit_price" name="unit_price" value="<?= htmlspecialchars($unit_price) ?>"><br>
         <?php if (isset($errors['unit_price'])): ?>

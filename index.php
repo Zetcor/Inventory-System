@@ -36,7 +36,7 @@
 <body>
 
     <h2>Inventory Items</h2>
-
+    
     <a href="create.php">Add Item</a> |
     <a href="transaction.php">Order Item</a>
 
@@ -70,7 +70,7 @@
                     <td><?= $row['manufacturer'] ?></td>
                     <td><?= $row['quantity'] ?></td>
                     <td style="text-align: right;">Php <?= number_format($row['unit_price'], 2) ?></td>
-                    <td><?= $row['date_added'] ?></td>
+                    <td><?= date('F d, Y', strtotime($row['date_added'])) ?></td>
                     <td>
                         <form action="edit.php" method="POST" style="display:inline;">
                             <input type="hidden" name="id" value="<?= $row['item_id'] ?>">

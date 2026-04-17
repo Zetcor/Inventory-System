@@ -4,7 +4,7 @@
     include 'connection.php';
     include 'validations.php';
 
-    $query = "SELECT item_name FROM items WHERE quantity > 0";
+    $query = "SELECT item_id FROM items WHERE quantity > 0"; // Change to item_name if item_name is the one needed to determine which to transact
     $result = mysqli_query($conn, $query);
 
     $errors = [];
@@ -17,16 +17,18 @@
         $quantity   = sanitize_input($_POST['quantity']);
         $order_date = sanitize_input($_POST['order_date']);
         $mod        = sanitize_input($_POST['mod']);
-        $item_name  = sanitize_input($_POST['item_name']);
+        $item_id    = sanitize_input($_POST['item_id']);
+        // $item_name    = sanitize_input($_POST['item_name']); // If item_name is the one needed to determine which to transact, get the item_id based on the selected item_name and use that item_id to get the stock and other details needed for the transaction
 
-        $stmt = $conn->prepare("SELECT quantity FROM items WHERE item_name = ?");
-        $stmt->bind_param("s", $item_name);
+        $stmt = $conn->prepare("SELECT quantity, item_name FROM items WHERE item_id = ?"); // remove item_name from the select statement if item_name is not needed to determine which to transact
+        $stmt->bind_param("s", $item_id);
         $stmt->execute();
         $stock_result = $stmt->get_result();
 
         if (mysqli_num_rows($stock_result) > 0) {
             $row = mysqli_fetch_assoc($stock_result);
             $stock = $row['quantity'];
+            $item_name = $row['item_name']; // Remove if item_name is the one needed to determine which to transact
         }
 
         if (is_empty($quantity)) {
@@ -48,6 +50,7 @@
         // if no errors pass to checkout.php
         if (empty($errors)) {
             $_SESSION['order'] = [
+                'item_id'    => $item_id,
                 'item_name'  => $item_name,
                 'quantity'   => $quantity,
                 'order_date' => $order_date,
@@ -75,7 +78,8 @@
     <h2>Order Item</h2>
 
     <form action="transaction.php" method="POST" name="order">
-        <label for="item_name">Item Name:</label><br>
+        <!-- When item_name is the one needed to determine which to transact -->
+        <!-- <label for="item_name">Item Name:</label><br>
         <select id="item_name" name="item_name" required>
             <option value="">Select an item</option>
             <?php if (mysqli_num_rows($result) > 0): ?>
@@ -83,7 +87,17 @@
                     <option value="<?= $row['item_name'] ?>"><?= $row['item_name'] ?></option>
                 <?php endwhile; ?>
             <?php endif; ?>
-        </select><br><br>
+        </select><br><br> -->
+
+        <label for="item_id">Item ID:</label><br>
+        <select id="item_id" name="item_id" required>
+            <option value="">Select an item</option>
+            <?php if (mysqli_num_rows($result) > 0): ?>
+                <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                    <option value="<?= $row['item_id'] ?>"><?= $row['item_id'] ?></option>
+                <?php endwhile; ?>
+            <?php endif; ?>
+        </select><br><br><br>
 
         <!-- add min="1" if needed and step="0.01" or "1", depending on the decimal places needed -->
         <!-- use step="any" to accept any number of decimal places -->
@@ -108,7 +122,7 @@
             <option value="Cash">Cash</option>
             <option value="Debit/Credit Card">Debit/Credit Card</option>
             <option value="Check">Check</option>
-        </select><br><br>
+        </select><br><br><br>
 
         <input type="submit" name="order" value="Order Item">
     </form>
