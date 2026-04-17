@@ -6,6 +6,7 @@
         $item_name = trim(htmlspecialchars(strip_tags($_POST['item_name'])));
         $quantity = trim(htmlspecialchars(strip_tags($_POST['quantity'])));
         $mod = trim(htmlspecialchars(strip_tags($_POST['mod'])));
+        $order_date = trim(htmlspecialchars(strip_tags($_POST['order_date'])));
 
         $query = "SELECT * FROM items WHERE item_name = '$item_name'";
         $result = mysqli_query($conn, $query);
@@ -18,6 +19,7 @@
             $t_date       = date('Y-m-d');
             $unit_price   = $row['unit_price'];
             $subtotal     = $quantity * $unit_price;
+            $order_day    = date('N', strtotime($order_date));
 
             $service_fee = 0;
 
@@ -34,6 +36,18 @@
             }
 
             $total = $subtotal + $service_fee + $payment_fee;
+
+            // $discount = 0;
+
+            // if ($order_day >= 1 && $order_day <= 5) {
+            //     $discount = 0.1; // 10% discount for orders placed on weekdays
+            //     $total = $subtotal * (1 - $discount); // 10% discount for orders placed on weekdays
+            // } else {
+            //     $discount = 0.05; // 5% discount for orders placed on weekends
+            //     $total = $subtotal * (1 - $discount); // 5% discount for orders placed on weekends
+            // }
+
+            // $grand_total = $total + ($total * 0.12); // Adding 12% tax to the total
 
             if ($stock >= $quantity) {
 
@@ -94,6 +108,7 @@
 
         <p><strong>Service Fee: </strong> Php <?= number_format($service_fee, 2) ?></p>
         <p><strong>Mode of Payment: </strong> <?= $mod ?></p>
+        <p><strong>Order Date: </strong> <?= date('F d, Y', strtotime($order_date)) ?></p>
         <p><strong>Payment Fee: </strong> Php <?= number_format($payment_fee, 2) ?></p>
         <p><strong>Total Amount: </strong> Php <?= number_format($total, 2) ?></p>
     <?php endif; ?>

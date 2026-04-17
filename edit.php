@@ -1,14 +1,14 @@
 <?php
 
     include 'connection.php';
+    include 'validations.php';
 
     if (isset($_POST['edit'])) {
-        $item_id      = trim(htmlspecialchars(strip_tags($_POST['item_id'])));
-        $item_name    = trim(htmlspecialchars(strip_tags($_POST['item_name'])));
-        $manufacturer = trim(htmlspecialchars(strip_tags($_POST['manufacturer'])));
-        $quantity     = trim(htmlspecialchars(strip_tags($_POST['quantity'])));
-        $unit_price   = trim(htmlspecialchars(strip_tags($_POST['unit_price'])));
-
+        $item_id      = validate_input($_POST['item_id']);
+        $item_name    = validate_input($_POST['item_name']);
+        $manufacturer = validate_input($_POST['manufacturer']);
+        $quantity     = validate_input($_POST['quantity']);
+        $unit_price   = validate_input($_POST['unit_price']);
         // Generate new item_id based on updated item_name and manufacturer IF NEEDED!!!
         // $query = "SELECT date_added FROM items WHERE item_id = '$item_id'";
         // $result = mysqli_query($conn, $query);
@@ -78,10 +78,11 @@
         <input type="text" id="manufacturer" name="manufacturer" value="<?= $manufacturer ?>" required><br><br>
 
         <label for="quantity">Quantity:</label><br>
-        <input type="number" id="quantity" name="quantity" value="<?= $quantity ?>" required><br><br>
+        <input type="number" id="quantity" name="quantity" value="<?= $quantity ?>" min="1" required><br><br>
 
+        <!-- use step="any" to accept any number of decimal places -->
         <label for="unit_price">Unit Price:</label><br>
-        <input type="number" step="1.00" id="unit_price" name="unit_price" value="<?= $unit_price ?>" required><br><br>
+        <input type="number" step="0.001" id="unit_price" name="unit_price" value="<?= $unit_price ?>" min="1" required><br><br>
 
         <input type="submit" value="Update Item" name="edit">
     </form>

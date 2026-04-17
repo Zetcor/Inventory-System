@@ -2,8 +2,14 @@
 
     include 'connection.php';
 
-    $query = "SELECT * FROM items";
-    $result = mysqli_query($conn, $query);
+    if (isset($_GET['search']) && strlen(trim($_GET['search'])) > 0) {
+        $search = trim(htmlspecialchars(strip_tags($_GET['search'])));
+        $query = "SELECT * FROM items WHERE item_name LIKE '%$search%' OR manufacturer LIKE '%$search%' OR item_id LIKE '%$search%'";
+        $result = mysqli_query($conn, $query);
+    } else {
+        $query = "SELECT * FROM items";
+        $result = mysqli_query($conn, $query);
+    }
 
 ?>
 
@@ -21,6 +27,14 @@
 
     <a href="create.php">Add Item</a> |
     <a href="transaction.php">Order Item</a>
+
+    <br><br>
+
+    <form action="index.php" method="GET">
+        <input type="text" name="search" placeholder="Search Items...">
+        <input type="submit" value="Search">
+    </form>
+
     <br><br>
 
     <table border="1" cellpadding="8" cellspacing="0">
@@ -43,7 +57,7 @@
                     <td><?= $row['item_name'] ?></td>
                     <td><?= $row['manufacturer'] ?></td>
                     <td><?= $row['quantity'] ?></td>
-                    <td>Php <?= number_format($row['unit_price'], 2) ?></td>
+                    <td style="text-align: right;">Php <?= number_format($row['unit_price'], 2) ?></td>
                     <td><?= $row['date_added'] ?></td>
                     <td>
                         <form action="edit.php" method="POST" style="display:inline;">
