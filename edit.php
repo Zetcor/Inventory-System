@@ -78,11 +78,11 @@
         <input type="text" id="manufacturer" name="manufacturer" value="<?= $manufacturer ?>" required><br><br>
 
         <label for="quantity">Quantity:</label><br>
-        <input type="number" id="quantity" name="quantity" value="<?= $quantity ?>" min="1" required><br><br>
+        <input type="number" step="1" id="quantity" name="quantity" value="<?= $quantity ?>" min="1" required><br><br>
 
         <!-- use step="any" to accept any number of decimal places -->
         <label for="unit_price">Unit Price:</label><br>
-        <input type="number" step="0.001" id="unit_price" name="unit_price" value="<?= $unit_price ?>" min="1" required><br><br>
+        <input type="number" step="0.01" id="unit_price" name="unit_price" value="<?= $unit_price ?>" min="1" required><br><br>
 
         <input type="submit" value="Update Item" name="edit">
     </form>

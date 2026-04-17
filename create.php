@@ -1,5 +1,6 @@
 <?php
     include 'connection.php';
+    include 'validations.php';
 
     $item_id = "";
     $item_name = "";
@@ -8,10 +9,10 @@
     $unit_price = "";
 
     if (isset($_POST['create'])) {
-        $item_name = trim(htmlspecialchars(strip_tags($_POST['item_name'])));
-        $manufacturer = trim(htmlspecialchars(strip_tags($_POST['manufacturer'])));
-        $quantity = trim(htmlspecialchars(strip_tags($_POST['quantity'])));
-        $unit_price = trim(htmlspecialchars(strip_tags($_POST['unit_price'])));
+        $item_name = validate_input($_POST['item_name']);
+        $manufacturer = validate_input($_POST['manufacturer']);
+        $quantity = validate_input($_POST['quantity']);
+        $unit_price = validate_input($_POST['unit_price']);
         $date_added = date('Ymd');
 
         $manu2 = strtoupper(substr($manufacturer, 0, 2));
@@ -56,10 +57,10 @@
         <input type="text" id="manufacturer" name="manufacturer" required><br><br>
 
         <label for="quantity">Quantity:</label><br>
-        <input type="number" id="quantity" name="quantity" required><br><br>
+        <input type="number" step="1" id="quantity" name="quantity" min="1" required><br><br>
 
         <label for="unit_price">Unit Price:</label><br>
-        <input type="number" step="1.00" id="unit_price" name="unit_price" required><br><br>
+        <input type="number" step="0.01" id="unit_price" name="unit_price" min="1" required><br><br>
 
         <input type="submit" value="Add Item" name="create">
     </form>

@@ -34,7 +34,7 @@
         </select><br><br>
 
         <label for="quantity">Quantity:</label><br>
-        <input type="number" id="quantity" name="quantity" min="1" required><br><br>
+        <input type="number" step="1" id="quantity" name="quantity" min="1" required><br><br>
 
         <label for="order_date">Choose Date:</label><br>
         <input type="date" id="order_date" name="order_date" min="<?= date('Y-m-d') ?>" required><br><br>
