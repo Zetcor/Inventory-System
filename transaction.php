@@ -85,6 +85,8 @@
             <?php endif; ?>
         </select><br><br>
 
+        <!-- add min="1" if needed and step="0.01" or "1", depending on the decimal places needed -->
+        <!-- use step="any" to accept any number of decimal places -->
         <label for="quantity">Quantity:</label><br>
         <input type="number" id="quantity" name="quantity" value="<?= htmlspecialchars($quantity) ?>" required><br>
         <?php if (isset($errors['quantity'])): ?>
