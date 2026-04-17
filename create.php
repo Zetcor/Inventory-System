@@ -7,29 +7,62 @@
     $manufacturer = "";
     $quantity = "";
     $unit_price = "";
+    
 
     if (isset($_POST['create'])) {
-        $item_name = validate_input($_POST['item_name']);
-        $manufacturer = validate_input($_POST['manufacturer']);
-        $quantity = validate_input($_POST['quantity']);
-        $unit_price = validate_input($_POST['unit_price']);
-        $date_added = date('Ymd');
+        $item_name    = sanitize_input($_POST['item_name']);
+        $manufacturer = sanitize_input($_POST['manufacturer']);
+        $quantity     = sanitize_input($_POST['quantity']);
+        $unit_price   = sanitize_input($_POST['unit_price']);
+        $date_added   = date('Y-m-d');
+        $date_id      = date('Ymd');
 
-        $manu2 = strtoupper(substr($manufacturer, 0, 2));
-        $item3 = strtoupper(substr($item_name, 0, 3));
-        $random = rand(1000000, 9999999);
-
-        $item_id = $manu2 . "-" . $item3 . "-" . $date_added . "-" . $random;
-
-        $query  = "INSERT INTO items (item_id, item_name, manufacturer, quantity, unit_price, date_added) 
-           VALUES ('$item_id', '$item_name', '$manufacturer', '$quantity', '$unit_price', '$date_added')";
-        $result = mysqli_query($conn, $query);
-
-        if ($result) {
-            header('Location: index.php');
-            exit();
+        $errors = [];
+        if (is_empty($item_name)) {
+            $errors['item_name'] = "Item name is required.";
+        } else if (!validate_string($item_name)) {
+            $errors['item_name'] = "Item name contains invalid characters.";
         }
 
+        if (is_empty($manufacturer)) {
+            $errors['manufacturer'] = "Manufacturer is required.";
+        } else if (!validate_string($manufacturer)) {
+            $errors['manufacturer'] = "Manufacturer contains invalid characters.";
+        }
+
+        if (is_empty($quantity)) {
+            $errors['quantity'] = "Quantity is required.";
+        } else if (!validate_quantity($quantity)) {
+            $errors['quantity'] = "Quantity must be a positive number.";
+        }
+
+        if (is_empty($unit_price)) {
+            $errors['unit_price'] = "Unit price is required.";
+        } else if (!validate_unit_price($unit_price)) {
+            $errors['unit_price'] = "Unit price must be a positive number.";
+        }
+
+        if (empty($errors)) {
+            $manu2 = strtoupper(substr($manufacturer, 0, 2));
+            $item3 = strtoupper(substr($item_name, 0, 3));
+            $random = rand(1000000, 9999999);
+
+            $item_id = $manu2 . "-" . $item3 . "-" . $date_id . "-" . $random;
+
+            $stmt = $conn->prepare("INSERT INTO items (item_id, item_name, manufacturer, quantity, unit_price, date_added) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssids", $item_id, $item_name, $manufacturer, $quantity, $unit_price, $date_added);
+            $stmt->execute();
+
+            // No prepared statement version (vulnerable to SQL injection):
+            // $query  = "INSERT INTO items (item_id, item_name, manufacturer, quantity, unit_price, date_added) 
+            //    VALUES ('$item_id', '$item_name', '$manufacturer', '$quantity', '$unit_price', '$date_added')";
+            // $result = mysqli_query($conn, $query);
+
+            if ($stmt->affected_rows > 0) {
+                header('Location: index.php');
+                exit();
+            }
+        }
     }
 
 ?>
@@ -51,16 +84,32 @@
 
     <form action="create.php" method="POST" name="create">
         <label for="item_name">Item Name:</label><br>
-        <input type="text" id="item_name" name="item_name" required><br><br>
+        <input type="text" id="item_name" name="item_name" value="<?= htmlspecialchars($item_name) ?>"><br>
+        <?php if (isset($errors['item_name'])): ?>
+            <span style="color:red;"><?= $errors['item_name'] ?></span>
+        <?php endif; ?>
+        <br><br>
 
         <label for="manufacturer">Manufacturer:</label><br>
-        <input type="text" id="manufacturer" name="manufacturer" required><br><br>
+        <input type="text" id="manufacturer" name="manufacturer" value="<?= htmlspecialchars($manufacturer) ?>"><br>
+        <?php if (isset($errors['manufacturer'])): ?>
+            <span style="color:red;"><?= $errors['manufacturer'] ?></span>
+        <?php endif; ?>
+        <br><br>
 
         <label for="quantity">Quantity:</label><br>
-        <input type="number" step="1" id="quantity" name="quantity" min="1" required><br><br>
+        <input type="number" step="1" id="quantity" name="quantity" value="<?= htmlspecialchars($quantity) ?>"><br>
+        <?php if (isset($errors['quantity'])): ?>
+            <span style="color:red;"><?= $errors['quantity'] ?></span>
+        <?php endif; ?>
+        <br><br>
 
         <label for="unit_price">Unit Price:</label><br>
-        <input type="number" step="0.01" id="unit_price" name="unit_price" min="1" required><br><br>
+        <input type="number" step="0.01" id="unit_price" name="unit_price" value="<?= htmlspecialchars($unit_price) ?>"><br>
+        <?php if (isset($errors['unit_price'])): ?>
+            <span style="color:red;"><?= $errors['unit_price'] ?></span>
+        <?php endif; ?>
+        <br><br>
 
         <input type="submit" value="Add Item" name="create">
     </form>

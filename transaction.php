@@ -1,10 +1,47 @@
 <?php
 
+    session_start();
     include 'connection.php';
+    include 'validations.php';
 
     $query = "SELECT item_name FROM items";
     $result = mysqli_query($conn, $query);
 
+    $errors = [];
+    $quantity = "";
+    $order_date = "";
+    $mod = "";
+
+    if (isset($_POST['order'])) {
+        $quantity   = sanitize_input($_POST['quantity']);
+        $order_date = sanitize_input($_POST['order_date']);
+        $mod        = sanitize_input($_POST['mod']);
+        $item_name  = sanitize_input($_POST['item_name']);
+
+        if (is_empty($quantity)) {
+            $errors['quantity'] = "Quantity is required.";
+        } else if (!validate_quantity($quantity)) {
+            $errors['quantity'] = "Quantity must be a positive whole number.";
+        }
+
+        if (is_empty($order_date)) {
+            $errors['order_date'] = "Order date is required.";
+        } else if (!validate_date($order_date)) {
+            $errors['order_date'] = "Order date cannot be in the past.";
+        }
+
+        // if no errors pass to checkout.php
+        if (empty($errors)) {
+            $_SESSION['order'] = [
+                'item_name'  => $item_name,
+                'quantity'   => $quantity,
+                'order_date' => $order_date,
+                'mod'        => $mod
+            ];
+            header('Location: checkout.php');
+            exit();
+        }
+    }
 ?>
 
 <!DOCTYPE html>
@@ -22,7 +59,7 @@
 
     <h2>Order Item</h2>
 
-    <form action="checkout.php" method="POST" name="order">
+    <form action="transaction.php" method="POST" name="order">
         <label for="item_name">Item Name:</label><br>
         <select id="item_name" name="item_name" required>
             <option value="">Select an item</option>
@@ -34,10 +71,19 @@
         </select><br><br>
 
         <label for="quantity">Quantity:</label><br>
-        <input type="number" step="1" id="quantity" name="quantity" min="1" required><br><br>
+        <input type="number" id="quantity" name="quantity" value="<?= htmlspecialchars($quantity) ?>" required><br>
+        <?php if (isset($errors['quantity'])): ?>
+            <span style="color:red;"><?= $errors['quantity'] ?></span>
+        <?php endif; ?>
+        <br><br>
 
+        <!-- To make past dates unselectable, min="<?= date('Y-m-d') ?>" -->
         <label for="order_date">Choose Date:</label><br>
-        <input type="date" id="order_date" name="order_date" min="<?= date('Y-m-d') ?>" required><br><br>
+        <input type="date" id="order_date" name="order_date" value="<?= htmlspecialchars($order_date) ?>" required><br>
+        <?php if (isset($errors['order_date'])): ?>
+            <span style="color:red;"><?= $errors['order_date'] ?></span>
+        <?php endif; ?>
+        <br><br>
 
         <label for="mod">Mode of Payment:</label><br>
         <select id="mod" name="mod" required>

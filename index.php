@@ -1,13 +1,25 @@
 <?php
 
     include 'connection.php';
+    include 'validations.php';
+
+    // s string
+    // i integer
+    // d decimal/float
 
     if (isset($_GET['search']) && strlen(trim($_GET['search'])) > 0) {
-        $search = trim(htmlspecialchars(strip_tags($_GET['search'])));
-        $query = "SELECT * FROM items WHERE item_name LIKE '%$search%' OR manufacturer LIKE '%$search%' OR item_id LIKE '%$search%'";
-        $result = mysqli_query($conn, $query);
+        $stmt = $conn->prepare("SELECT * FROM items WHERE item_name LIKE ? OR manufacturer LIKE ? OR item_id LIKE ? ORDER BY date_added DESC");
+        $search_param = '%' . sanitize_input($_GET['search']) . '%';
+        $stmt->bind_param("sss", $search_param, $search_param, $search_param);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // No prepared statement version (vulnerable to SQL injection):
+        // $search = validate_input($_GET['search']);
+        // $query = "SELECT * FROM items WHERE item_name LIKE '%$search%' OR manufacturer LIKE '%$search%' OR item_id LIKE '%$search%'";
+        // $result = mysqli_query($conn, $query);
     } else {
-        $query = "SELECT * FROM items";
+        $query = "SELECT * FROM items ORDER BY date_added DESC";
         $result = mysqli_query($conn, $query);
     }
 

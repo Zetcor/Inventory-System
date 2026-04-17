@@ -1,15 +1,22 @@
 <?php
 
+    session_start();
     include 'connection.php';
 
-    if (isset($_POST['order'])) {
-        $item_name = trim(htmlspecialchars(strip_tags($_POST['item_name'])));
-        $quantity = trim(htmlspecialchars(strip_tags($_POST['quantity'])));
-        $mod = trim(htmlspecialchars(strip_tags($_POST['mod'])));
-        $order_date = trim(htmlspecialchars(strip_tags($_POST['order_date'])));
+    if (isset($_SESSION['order'])) {
+        $item_name = $_SESSION['order']['item_name'];
+        $quantity = $_SESSION['order']['quantity'];
+        $mod = $_SESSION['order']['mod'];
+        $order_date = $_SESSION['order']['order_date'];
 
-        $query = "SELECT * FROM items WHERE item_name = '$item_name'";
-        $result = mysqli_query($conn, $query);
+        $stmt = $conn->prepare("SELECT * FROM items WHERE item_name = ?");
+        $stmt->bind_param("s", $item_name);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // No prepared statement version (vulnerable to SQL injection):
+        // $query = "SELECT * FROM items WHERE item_name = '$item_name'";
+        // $result = mysqli_query($conn, $query);
 
         if (mysqli_num_rows($result) > 0) {
             $row          = mysqli_fetch_assoc($result);
@@ -49,14 +56,30 @@
 
             // $grand_total = $total + ($total * 0.12); // Adding 12% tax to the total
 
+            $success = false;
+
             if ($stock >= $quantity) {
 
-                $query = "INSERT INTO transactions (item_id, quantity, mode_of_payment, transaction_date, service_fee, payment_fee, subtotal, total_amount) VALUES ('$item_id', '$quantity', '$mod', '$t_date', '$service_fee', '$payment_fee', '$subtotal', '$total')";
-                mysqli_query($conn, $query);
+                $stmt = $conn->prepare("INSERT INTO transactions (item_id, quantity, mode_of_payment, transaction_date, service_fee, payment_fee, subtotal, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("sissdddd", $item_id, $quantity, $mod, $t_date, $service_fee, $payment_fee, $subtotal, $total);
+                $stmt->execute();
+
+                // No prepared statement version (vulnerable to SQL injection):
+                // $query = "INSERT INTO transactions (item_id, quantity, mode_of_payment, transaction_date, service_fee, payment_fee, subtotal, total_amount) VALUES ('$item_id', '$quantity', '$mod', '$t_date', '$service_fee', '$payment_fee', '$subtotal', '$total')";
+                // mysqli_query($conn, $query);
 
                 $new_quantity = $row['quantity'] - $quantity;
-                $query = "UPDATE items SET quantity = '$new_quantity' WHERE item_id = '$item_id'";
-                mysqli_query($conn, $query);
+
+                $stmt = $conn->prepare("UPDATE items SET quantity = ? WHERE item_id = ?");
+                $stmt->bind_param("is", $new_quantity, $item_id);
+                $stmt->execute();
+
+                unset($_SESSION['order']);
+                $success = true;
+
+                // No prepared statement version (vulnerable to SQL injection):
+                // $query = "UPDATE items SET quantity = '$new_quantity' WHERE item_id = '$item_id'";
+                // mysqli_query($conn, $query);
             } else {
                 echo "There are not enough units for $item_name.";
                 exit();
@@ -65,7 +88,10 @@
             echo "Item not found.";
         }
 
-    } 
+    } else {
+        header('Location: transaction.php');
+        exit();
+    }
 
 ?>
 
@@ -78,7 +104,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <?php if (isset($_POST['order']) && $stock >= $quantity): ?>
+    <?php if ($success): ?>
         <br><br>
         <a href="index.php">Home</a>
         <br><br>

@@ -9,12 +9,15 @@
         exit();
     }
 
-    $query = "DELETE FROM items WHERE item_id = '$id'";
-    $result = mysqli_query($conn, $query);
+    $stmt = $conn->prepare("DELETE FROM items WHERE item_id = ?");
+    $stmt->bind_param("s", $id);
+    $stmt->execute();
 
-    if ($result) {
+    // No prepared statement version (vulnerable to SQL injection):
+    // $query = "DELETE FROM items WHERE item_id = '$id'";
+    // $result = mysqli_query($conn, $query);
+
+    if ($stmt->affected_rows > 0) {
         header('Location: index.php');
         exit();
     }
-
-?>
