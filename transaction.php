@@ -4,19 +4,30 @@
     include 'connection.php';
     include 'validations.php';
 
-    $query = "SELECT item_name FROM items";
+    $query = "SELECT item_name FROM items WHERE quantity > 0";
     $result = mysqli_query($conn, $query);
 
     $errors = [];
     $quantity = "";
     $order_date = "";
     $mod = "";
+    $stock = 0;
 
     if (isset($_POST['order'])) {
         $quantity   = sanitize_input($_POST['quantity']);
         $order_date = sanitize_input($_POST['order_date']);
         $mod        = sanitize_input($_POST['mod']);
         $item_name  = sanitize_input($_POST['item_name']);
+
+        $stmt = $conn->prepare("SELECT quantity FROM items WHERE item_name = ?");
+        $stmt->bind_param("s", $item_name);
+        $stmt->execute();
+        $stock_result = $stmt->get_result();
+
+        if (mysqli_num_rows($stock_result) > 0) {
+            $row = mysqli_fetch_assoc($stock_result);
+            $stock = $row['quantity'];
+        }
 
         if (is_empty($quantity)) {
             $errors['quantity'] = "Quantity is required.";
@@ -28,6 +39,10 @@
             $errors['order_date'] = "Order date is required.";
         } else if (!validate_date($order_date)) {
             $errors['order_date'] = "Order date cannot be in the past.";
+        }
+
+        if ($stock < $quantity) {
+            $errors['quantity'] = "There are not enough units for $item_name.";
         }
 
         // if no errors pass to checkout.php

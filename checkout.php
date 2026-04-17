@@ -80,10 +80,8 @@
                 // No prepared statement version (vulnerable to SQL injection):
                 // $query = "UPDATE items SET quantity = '$new_quantity' WHERE item_id = '$item_id'";
                 // mysqli_query($conn, $query);
-            } else {
-                echo "There are not enough units for $item_name.";
-                exit();
             }
+            
         } else {
             echo "Item not found.";
         }
